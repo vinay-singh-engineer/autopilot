@@ -1,0 +1,610 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>AutoPilot — Scheduled Automation</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+      --bg:     #000;
+      --text:   #f5f5f7;
+      --accent: #7c3aed;
+      --muted:  #6e6e73;
+      --green:  #30d158;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', sans-serif;
+      overflow-x: hidden;
+    }
+
+    /* ── NAV ── */
+    nav {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      z-index: 100;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 18px 40px;
+      background: rgba(0,0,0,0.72);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+    }
+
+    .nav-logo {
+      font-size: 20px;
+      font-weight: 700;
+      letter-spacing: -0.5px;
+      color: var(--text);
+    }
+
+    .nav-logo span { color: var(--accent); }
+
+    .nav-right {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+    }
+
+    .nav-user {
+      font-size: 13px;
+      color: var(--muted);
+    }
+
+    nav a {
+      color: var(--muted);
+      text-decoration: none;
+      font-size: 14px;
+      transition: color 0.2s;
+    }
+
+    nav a:hover { color: var(--text); }
+
+    .nav-cta {
+      background: var(--accent);
+      color: #fff !important;
+      padding: 8px 18px;
+      border-radius: 980px;
+      font-size: 13px !important;
+      font-weight: 500;
+      transition: opacity 0.2s !important;
+    }
+
+    .nav-cta:hover { opacity: 0.85; }
+
+    .nav-logout {
+      background: none;
+      border: none;
+      color: var(--muted);
+      font-size: 13px;
+      font-family: inherit;
+      cursor: pointer;
+      padding: 0;
+      transition: color 0.2s;
+    }
+
+    .nav-logout:hover { color: var(--text); }
+
+    /* ── HERO ── */
+    .hero {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 120px 24px 80px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .hero::before {
+      content: '';
+      position: absolute;
+      width: 800px;
+      height: 800px;
+      background: radial-gradient(
+        circle,
+        rgba(124, 58, 237, 0.15) 0%,
+        rgba(41, 151, 255, 0.08) 40%,
+        transparent 70%
+      );
+      border-radius: 50%;
+      animation: pulse-orb 6s ease-in-out infinite;
+      pointer-events: none;
+    }
+
+    @keyframes pulse-orb {
+      0%, 100% { transform: scale(1);   opacity: 0.6; }
+      50%       { transform: scale(1.2); opacity: 1;   }
+    }
+
+    .hero-eyebrow {
+      font-size: 13px;
+      font-weight: 600;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: 20px;
+      opacity: 0;
+      animation: fade-up 0.8s ease forwards 0.2s;
+    }
+
+    .hero-title {
+      font-size: clamp(48px, 8vw, 96px);
+      font-weight: 700;
+      letter-spacing: -2px;
+      line-height: 1.05;
+      margin-bottom: 24px;
+      opacity: 0;
+      animation: fade-up 0.8s ease forwards 0.4s;
+    }
+
+    .hero-title .highlight {
+      background: linear-gradient(135deg, #7c3aed, #2997ff);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .hero-subtitle {
+      font-size: clamp(17px, 2.5vw, 21px);
+      color: var(--muted);
+      max-width: 560px;
+      line-height: 1.6;
+      margin-bottom: 48px;
+      opacity: 0;
+      animation: fade-up 0.8s ease forwards 0.6s;
+    }
+
+    .hero-actions {
+      display: flex;
+      gap: 16px;
+      flex-wrap: wrap;
+      justify-content: center;
+      opacity: 0;
+      animation: fade-up 0.8s ease forwards 0.8s;
+    }
+
+    .btn-primary {
+      background: var(--accent);
+      color: #fff;
+      padding: 14px 28px;
+      border-radius: 980px;
+      font-size: 17px;
+      font-weight: 500;
+      text-decoration: none;
+      transition: opacity 0.2s, transform 0.2s;
+    }
+
+    .btn-primary:hover { opacity: 0.85; transform: scale(1.02); }
+
+    .btn-secondary {
+      color: var(--accent);
+      padding: 14px 28px;
+      border-radius: 980px;
+      font-size: 17px;
+      font-weight: 500;
+      text-decoration: none;
+      border: 1px solid rgba(124,58,237,0.4);
+      transition: background 0.2s, transform 0.2s;
+    }
+
+    .btn-secondary:hover {
+      background: rgba(124,58,237,0.1);
+      transform: scale(1.02);
+    }
+
+    /* ── LIVE TICKER ── */
+    .ticker-wrap {
+      width: 100%;
+      overflow: hidden;
+      background: rgba(255,255,255,0.04);
+      border-top: 1px solid rgba(255,255,255,0.08);
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+      padding: 14px 0;
+      margin-top: 80px;
+    }
+
+    .ticker {
+      display: flex;
+      gap: 60px;
+      animation: ticker-scroll 30s linear infinite;
+      white-space: nowrap;
+    }
+
+    .ticker-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+      color: var(--muted);
+      flex-shrink: 0;
+    }
+
+    .ticker-dot {
+      width: 7px; height: 7px;
+      border-radius: 50%;
+      background: var(--green);
+      box-shadow: 0 0 6px var(--green);
+      animation: blink 2s ease-in-out infinite;
+    }
+
+    .ticker-dot.fail    { background: #ff453a; box-shadow: 0 0 6px #ff453a; }
+    .ticker-dot.running { background: var(--accent); box-shadow: 0 0 6px var(--accent); }
+    .ticker-dot.idle    { background: #6e6e73; box-shadow: none; animation: none; }
+
+    @keyframes ticker-scroll {
+      from { transform: translateX(0); }
+      to   { transform: translateX(-50%); }
+    }
+
+    @keyframes blink {
+      0%, 100% { opacity: 1; }
+      50%       { opacity: 0.3; }
+    }
+
+    /* ── STATS STRIP ── */
+    .stats {
+      display: flex;
+      justify-content: center;
+      gap: 0;
+      padding: 80px 40px;
+      flex-wrap: wrap;
+    }
+
+    .stat-item {
+      text-align: center;
+      padding: 40px 60px;
+      border-right: 1px solid rgba(255,255,255,0.08);
+      opacity: 0;
+      animation: fade-up 0.8s ease forwards;
+    }
+
+    .stat-item:last-child { border-right: none; }
+    .stat-item:nth-child(1) { animation-delay: 0.1s; }
+    .stat-item:nth-child(2) { animation-delay: 0.2s; }
+    .stat-item:nth-child(3) { animation-delay: 0.3s; }
+    .stat-item:nth-child(4) { animation-delay: 0.4s; }
+
+    .stat-number {
+      font-size: 56px;
+      font-weight: 700;
+      letter-spacing: -2px;
+      background: linear-gradient(135deg, #fff, #6e6e73);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .stat-label {
+      font-size: 14px;
+      color: var(--muted);
+      margin-top: 8px;
+    }
+
+    /* ── FEATURE GRID ── */
+    .features {
+      padding: 40px 40px 100px;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    .section-label {
+      text-align: center;
+      font-size: 13px;
+      font-weight: 600;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: 16px;
+    }
+
+    .section-title {
+      text-align: center;
+      font-size: clamp(32px, 5vw, 52px);
+      font-weight: 700;
+      letter-spacing: -1.5px;
+      margin-bottom: 64px;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 2px;
+    }
+
+    .card {
+      background: rgba(255,255,255,0.04);
+      padding: 40px 36px;
+      border-radius: 0;
+      transition: background 0.3s;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .card:first-child  { border-radius: 20px 0 0 0; }
+    .card:nth-child(2) { border-radius: 0 20px 0 0; }
+    .card:nth-child(3) { border-radius: 0 0 0 20px; }
+    .card:last-child   { border-radius: 0 0 20px 0; }
+    .card:hover { background: rgba(255,255,255,0.07); }
+
+    .card-icon  { font-size: 36px; margin-bottom: 20px; display: block; }
+    .card-title { font-size: 20px; font-weight: 600; margin-bottom: 12px; letter-spacing: -0.3px; }
+    .card-desc  { font-size: 15px; color: var(--muted); line-height: 1.6; }
+
+    /* ── UPTIME VISUAL ── */
+    .uptime-section {
+      padding: 80px 40px;
+      text-align: center;
+      background: rgba(255,255,255,0.02);
+      border-top: 1px solid rgba(255,255,255,0.06);
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+    }
+
+    .uptime-bar-wrap {
+      display: flex;
+      gap: 3px;
+      justify-content: center;
+      margin: 40px auto;
+      max-width: 800px;
+      flex-wrap: wrap;
+    }
+
+    .uptime-bar {
+      width: 10px; height: 40px;
+      border-radius: 3px;
+      background: var(--green);
+      opacity: 0;
+      animation: bar-grow 0.3s ease forwards;
+    }
+
+    .uptime-bar.fail { background: #ff453a; height: 24px; margin-top: 8px; }
+    .uptime-bar.idle { background: #6e6e73; height: 32px; margin-top: 4px; }
+
+    @keyframes bar-grow {
+      from { opacity: 0; transform: scaleY(0.2); }
+      to   { opacity: 1; transform: scaleY(1); }
+    }
+
+    .uptime-pct   { font-size: 72px; font-weight: 700; letter-spacing: -3px; color: var(--green); }
+    .uptime-label { font-size: 17px; color: var(--muted); margin-top: 8px; }
+
+    /* ── FOOTER ── */
+    footer {
+      padding: 40px;
+      text-align: center;
+      font-size: 13px;
+      color: var(--muted);
+      border-top: 1px solid rgba(255,255,255,0.08);
+    }
+
+    /* ── ANIMATIONS ── */
+    @keyframes fade-up {
+      from { opacity: 0; transform: translateY(24px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ── RESPONSIVE ── */
+    @media (max-width: 768px) {
+      nav { padding: 16px 20px; }
+      .nav-user { display: none; }
+      .stat-item {
+        padding: 30px 30px;
+        border-right: none;
+        border-bottom: 1px solid rgba(255,255,255,0.08);
+      }
+      .features { padding: 40px 20px 80px; }
+      .card:first-child, .card:nth-child(2),
+      .card:nth-child(3), .card:last-child { border-radius: 0; }
+      .card:first-child { border-radius: 20px 20px 0 0; }
+      .card:last-child  { border-radius: 0 0 20px 20px; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- NAV -->
+  <nav>
+    <div class="nav-logo">AutoPilot<span>.</span></div>
+    <div class="nav-right">
+      <span class="nav-user">{{ user_name }}</span>
+      <a href="/autopilot/main" class="nav-cta">Open Dashboard →</a>
+      <form method="POST" action="/autopilot/logout" style="display:inline">
+        <button type="submit" class="nav-logout">Sign Out</button>
+      </form>
+    </div>
+  </nav>
+
+  <!-- HERO -->
+  <section class="hero">
+    <p class="hero-eyebrow">Scheduled Automation</p>
+    <h1 class="hero-title">
+      Every job.<br>
+      <span class="highlight">Always running.</span>
+    </h1>
+    <p class="hero-subtitle">
+      Schedule, monitor, and control your background jobs
+      from a single dashboard. Never miss a run.
+    </p>
+    <div class="hero-actions">
+      <a href="/autopilot/main" class="btn-primary">Open Dashboard</a>
+      <a href="#features" class="btn-secondary">Learn More</a>
+    </div>
+  </section>
+
+  <!-- LIVE TICKER -->
+  <div class="ticker-wrap">
+    <div class="ticker" id="ticker"></div>
+  </div>
+
+  <!-- STATS -->
+  <section class="stats">
+    <div class="stat-item">
+      <div class="stat-number" id="stat-total">0</div>
+      <div class="stat-label">Total Jobs</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-number" id="stat-enabled">0</div>
+      <div class="stat-label">Active Jobs</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-number" id="stat-success">0</div>
+      <div class="stat-label">Successful</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-number" id="stat-running">0</div>
+      <div class="stat-label">Running Now</div>
+    </div>
+  </section>
+
+  <!-- FEATURES -->
+  <section class="features" id="features">
+    <p class="section-label">What it does</p>
+    <h2 class="section-title">Built for reliability.</h2>
+    <div class="grid">
+      <div class="card">
+        <span class="card-icon">⚡</span>
+        <h3 class="card-title">Cron Scheduling</h3>
+        <p class="card-desc">
+          Define jobs with standard cron expressions. The scheduler syncs
+          every 30 seconds — no restart required to pick up changes.
+        </p>
+      </div>
+      <div class="card">
+        <span class="card-icon">📊</span>
+        <h3 class="card-title">Live Dashboard</h3>
+        <p class="card-desc">
+          Real-time status, last run times, and execution history
+          for every job — all in one view.
+        </p>
+      </div>
+      <div class="card">
+        <span class="card-icon">🚨</span>
+        <h3 class="card-title">Failure Alerts</h3>
+        <p class="card-desc">
+          Webhook notifications on job failure. Drop in a Slack
+          incoming webhook and get paged instantly.
+        </p>
+      </div>
+      <div class="card">
+        <span class="card-icon">🎛️</span>
+        <h3 class="card-title">Manual Override</h3>
+        <p class="card-desc">
+          Trigger any job on-demand, enable or disable
+          without touching the config file.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- UPTIME VISUAL -->
+  <section class="uptime-section">
+    <p class="section-label">System Health</p>
+    <div class="uptime-pct">{{ uptime_pct }}%</div>
+    <div class="uptime-label">success rate across all configured jobs</div>
+    <div class="uptime-bar-wrap" id="uptime-bars"></div>
+    <p style="font-size:13px; color:#6e6e73; margin-top:8px;">
+      <span style="color:#30d158">■</span> Success &nbsp;·&nbsp;
+      <span style="color:#6e6e73">■</span> Idle &nbsp;·&nbsp;
+      <span style="color:#ff453a">■</span> Failure
+    </p>
+  </section>
+
+  <!-- FOOTER -->
+  <footer>
+    <p>AutoPilot · job scheduler · © 2026 Vinay Singh · v{{ app_version }}</p>
+  </footer>
+
+  <script>
+    // ── TICKER — data injected from Flask ────────────────
+    const tickerJobs = [
+      {% for job in jobs %}
+      {
+        name:   "{{ job.name | replace('_', ' ') | title }}",
+        status: "{{ 'running' if job.status == 'Running' else ('fail' if job.status == 'Failure' else ('idle' if job.status in ('Idle', '-') else 'success')) }}",
+        time:   "{{ job.start_time }}"
+      }{% if not loop.last %},{% endif %}
+
+      {% endfor %}
+    ];
+
+    const statusMap = {
+      success: { dot: "",        label: "✓ Success" },
+      running: { dot: "running", label: "● Running" },
+      fail:    { dot: "fail",    label: "✗ Failed"  },
+      idle:    { dot: "idle",    label: "— Idle"    },
+    };
+
+    function buildTicker() {
+      const ticker = document.getElementById('ticker');
+      if (tickerJobs.length === 0) return;
+      const items = [...tickerJobs, ...tickerJobs];
+      ticker.innerHTML = items.map(j => {
+        const s = statusMap[j.status] || statusMap.success;
+        return `<span class="ticker-item">
+          <span class="ticker-dot ${s.dot}"></span>
+          <span>${j.name}</span>
+          <span style="color:#fff;opacity:0.5">${s.label}</span>
+          <span style="opacity:0.3">${j.time}</span>
+        </span>`;
+      }).join('');
+    }
+
+    buildTicker();
+
+    // ── COUNT-UP ANIMATION ───────────────────────────────
+    function countUp(el, target, duration = 1200) {
+      if (!el) return;
+      if (target === 0) { el.textContent = '0'; return; }
+      let start = 0;
+      const step = target / (duration / 16);
+      const timer = setInterval(() => {
+        start = Math.min(start + step, target);
+        el.textContent = Math.floor(start);
+        if (start >= target) clearInterval(timer);
+      }, 16);
+    }
+
+    const statsObserver = new IntersectionObserver((entries) => {
+      entries.forEach(e => {
+        if (e.isIntersecting) {
+          countUp(document.getElementById('stat-total'),   {{ total }});
+          countUp(document.getElementById('stat-enabled'), {{ enabled }});
+          countUp(document.getElementById('stat-success'), {{ success }});
+          countUp(document.getElementById('stat-running'), {{ running }});
+          statsObserver.disconnect();
+        }
+      });
+    }, { threshold: 0.3 });
+
+    statsObserver.observe(document.querySelector('.stats'));
+
+    // ── UPTIME BARS — derived from job statuses ──────────
+    function buildUptimeBars() {
+      const wrap = document.getElementById('uptime-bars');
+      const statuses = [{% for job in jobs %}"{{ job.status }}"{% if not loop.last %}, {% endif %}{% endfor %}];
+      if (statuses.length === 0) return;
+      const bars = 40;
+      for (let i = 0; i < bars; i++) {
+        const bar = document.createElement('div');
+        bar.className = 'uptime-bar';
+        bar.style.animationDelay = `${i * 0.015}s`;
+        const st = statuses[i % statuses.length];
+        if (st === 'Failure') bar.classList.add('fail');
+        else if (st === 'Idle' || st === '-') bar.classList.add('idle');
+        wrap.appendChild(bar);
+      }
+    }
+
+    buildUptimeBars();
+  </script>
+
+</body>
+</html>
