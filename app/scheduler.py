@@ -26,7 +26,6 @@ def parse_cron(cron_str):
 
 
 def sync_jobs():
-    global current_jobs
     config = load_config()
 
     for job_name, job_info in config.items():

@@ -4,8 +4,7 @@ import platform
 import threading
 from datetime import datetime, timedelta
 from functools import wraps
-from flask import Flask, abort, request, jsonify, redirect, url_for, render_template, session
-from werkzeug.exceptions import HTTPException
+from flask import Flask, request, jsonify, redirect, url_for, render_template, session
 
 LOG_DIR = "logs"
 VERSION_FILE = "./VERSION"

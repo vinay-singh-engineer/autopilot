@@ -19,7 +19,7 @@ def run():
     time.sleep(random.uniform(8.0, 14.0))
 
     with open(report_file, "w") as f:
-        f.write(f"Daily Summary Report\n")
+        f.write("Daily Summary Report\n")
         f.write(f"Generated : {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
         f.write(f"Jobs run  : {jobs_run}\n")
         f.write(f"Failed    : {jobs_failed}\n")

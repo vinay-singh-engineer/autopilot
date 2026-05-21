@@ -46,7 +46,7 @@ def log_job_execution(job=None, status=None, start=None, end=None, notification=
     log_file = f"{LOG_DIR}/autopilot_{datetime.now().strftime('%Y%m%d')}.log"
     with open(log_file, "a", encoding="utf-8") as f:
         ts = datetime.now().strftime("%m-%d-%Y %H:%M:%S")
-        f.write(f"{ts} | job={job} | status={status} | start={start} | end={end} | notification={notification}\n")
+        f.write(f"{ts} | job={job} | status={status} | start={start} | end={end} | notification={notification}\n")  # noqa: E501
 
 
 def run_job(job_name, script_path):
