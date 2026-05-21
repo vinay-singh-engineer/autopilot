@@ -1,0 +1,12 @@
+{
+  "app": {
+    "logRetention": 7
+  },
+  "webhook": {
+    "enabled": false,
+    "url": ""
+  },
+  "healthCheck": {
+    "url": "http://localhost:5000/autopilot/login"
+  }
+}

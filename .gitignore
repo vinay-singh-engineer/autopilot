@@ -1,0 +1,11 @@
+.env
+logs/
+backups/
+reports/
+__pycache__/
+*.pyc
+*.pyo
+.coverage
+coverage.xml
+.DS_Store
+*.egg-info/

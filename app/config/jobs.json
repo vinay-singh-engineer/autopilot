@@ -1,9 +1,9 @@
 {
-  "backup_simulation": {
-    "path": "jobs/backup_sim.py",
+  "nightly_backup": {
+    "path": "jobs/nightly_backup.py",
     "enabled": true,
     "cron": "0 2 * * *",
-    "info": "Simulates a nightly backup by writing a timestamped archive file. Demonstrates scheduled execution and file I/O."
+    "info": "Runs a nightly backup by writing a timestamped archive file with size and status metadata."
   },
   "log_cleanup": {
     "path": "jobs/log_cleanup.py",
@@ -21,7 +21,7 @@
     "path": "jobs/sync_check.py",
     "enabled": false,
     "cron": "0 */4 * * *",
-    "info": "Simulates a data sync operation by generating a reconciliation report with record counts and discrepancy tracking."
+    "info": "Runs a data sync and generates a reconciliation report with record counts and discrepancy tracking."
   },
   "report_generator": {
     "path": "jobs/report_generator.py",

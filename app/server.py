@@ -67,7 +67,7 @@ def save_config(config):
 
 def remove_older_logs():
     if os.path.exists(LOG_DIR):
-        retention = SETTINGS["app"]["logRetention"]
+        retention = load_settings()["app"]["logRetention"]
         for filename in os.listdir(LOG_DIR):
             path = os.path.join(LOG_DIR, filename)
             if os.path.isfile(path):
@@ -135,7 +135,7 @@ def index():
     running = sum(1 for j in jobs_info if j["status"] == "Running")
     failed = sum(1 for j in jobs_info if j["status"] == "Failure")
     ran = success + failed
-    uptime_pct = round(success / ran * 100, 1) if ran > 0 else 100.0
+    uptime_pct = round(success / ran * 100, 1) if ran > 0 else None
     return render_template(
         "index.html",
         user_name=user,
@@ -211,7 +211,46 @@ def toggle_job(job_name):
     return redirect(url_for("main"))
 
 
+@app.route("/autopilot/settings", methods=["GET", "POST"])
+@login_required
+def settings_page():
+    global SETTINGS
+    user = session.get("user", "NA")
+    update_logs(f"user={user} | endpoint='/autopilot/settings'")
+    if request.method == "POST":
+        current = load_settings()
+        current["webhook"]["enabled"] = request.form.get("webhook_enabled") == "on"
+        current["webhook"]["url"] = request.form.get("webhook_url", "").strip()
+        try:
+            current["app"]["logRetention"] = max(1, int(request.form.get("log_retention", 7)))
+        except ValueError:
+            pass
+        current["healthCheck"]["url"] = request.form.get("health_check_url", "").strip()
+        with open(SETTINGS_FILE, "w", encoding="utf-8") as f:
+            json.dump(current, f, indent=2)
+        SETTINGS = current
+        return redirect(url_for("settings_page") + "?saved=1")
+    settings = load_settings()
+    saved = request.args.get("saved") == "1"
+    return render_template("settings.html", settings=settings, user_name=user,
+                           app_version=APP_VERSION, saved=saved)
+
+
+@app.route("/autopilot/settings/test", methods=["POST"])
+@login_required
+def test_webhook():
+    from notifier import notify
+    user = session.get("user", "NA")
+    update_logs(f"user={user} | endpoint='/autopilot/settings/test'")
+    webhook = load_settings().get("webhook", {})
+    result = notify(job="test",
+                    description="AutoPilot test notification — webhook is working.",
+                    settings=webhook)
+    return jsonify({"result": result})
+
+
 @app.route("/autopilot/logout", methods=["POST"])
+@login_required
 def logout():
     user = session.get("user", "unknown")
     session.clear()

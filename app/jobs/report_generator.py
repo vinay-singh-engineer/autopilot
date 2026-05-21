@@ -16,7 +16,7 @@ def run():
     active_users = random.randint(40, 120)
     avg_duration_ms = random.randint(210, 980)
 
-    time.sleep(random.uniform(1.0, 2.5))
+    time.sleep(random.uniform(8.0, 14.0))
 
     with open(report_file, "w") as f:
         f.write(f"Daily Summary Report\n")

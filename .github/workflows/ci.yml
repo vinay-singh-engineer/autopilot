@@ -1,0 +1,52 @@
+name: CI
+
+on:
+  push:
+    branches: [main, development]
+    paths:
+      - "app/**"
+      - ".github/workflows/ci.yml"
+  pull_request:
+    branches: [main]
+    paths:
+      - "app/**"
+
+jobs:
+  test:
+    name: Test & Lint
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        python-version: ["3.11", "3.12"]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: pip
+
+      - name: Install dependencies
+        run: pip install -r app/requirements.txt pytest pytest-cov flake8
+
+      - name: Lint (flake8)
+        run: flake8 app/ --max-line-length=110 --extend-ignore=E221,E251 --exclude=app/tests,app/templates
+
+      - name: Run tests with coverage
+        run: |
+          cd app
+          PYTHONPATH=. pytest tests/ -v \
+            --cov=. \
+            --cov-report=term-missing \
+            --cov-report=xml \
+            --cov-fail-under=60
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v4
+        if: matrix.python-version == '3.12'
+        with:
+          files: app/coverage.xml
+          fail_ci_if_error: false

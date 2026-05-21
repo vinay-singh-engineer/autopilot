@@ -13,7 +13,7 @@ WARN_DAYS = 30
 
 
 def run():
-    time.sleep(random.uniform(0.3, 1.0))
+    time.sleep(random.uniform(6.0, 10.0))
 
     results = []
     for host in ENDPOINTS:
