@@ -17,7 +17,7 @@ This project is a sanitized public version of a production job scheduler I built
 ## Tech Stack
 
 | Layer         | Technology               | Purpose                                      |
-|---------------|--------------------------|----------------------------------------------|
+|:--------------|:-------------------------|:---------------------------------------------|
 | Web           | Flask 3.x                | HTTP server, routing, template rendering     |
 | Scheduler     | APScheduler 3.x          | Background cron scheduler                    |
 | Auth          | Flask sessions           | Session-based login with env-var credentials |
@@ -81,7 +81,7 @@ Flask (server.py)          ← handles HTTP routes, auth, config reads/writes
 ## Routes
 
 | Method | Endpoint                          | Auth | Description                              |
-|--------|-----------------------------------|------|------------------------------------------|
+|:-------|:----------------------------------|:-----|:-----------------------------------------|
 | GET    | `/autopilot/login`                | —    | Sign-in page                             |
 | POST   | `/autopilot/login`                | —    | Authenticate and set session cookie      |
 | GET    | `/autopilot`                      | ✓    | Landing page with live stats and ticker  |
@@ -158,7 +158,7 @@ autopilot/
 ## Jobs
 
 | Job                  | Schedule         | Enabled | Description                                         |
-|----------------------|------------------|---------|-----------------------------------------------------|
+|:---------------------|:-----------------|:--------|:----------------------------------------------------|
 | `nightly_backup`     | `0 2 * * *`      | ✓       | Runs a nightly backup with a timestamped archive file  |
 | `log_cleanup`        | `0 3 * * *`      | ✓       | Removes log files past the configured retention     |
 | `health_check`       | `*/15 * * * *`   | ✓       | HTTP health check against the configured endpoint   |
@@ -215,7 +215,7 @@ PYTHONPATH=. pytest tests/ -v
 ### `.env`
 
 | Variable               | Description                     | Default                  |
-|------------------------|---------------------------------|--------------------------|
+|:-----------------------|:--------------------------------|:-------------------------|
 | `AUTOPILOT_USERNAME`   | Dashboard login username        | `admin`                  |
 | `AUTOPILOT_PASSWORD`   | Dashboard login password        | `changeme`               |
 | `AUTOPILOT_SECRET_KEY` | Flask session secret key        | `dev-secret-change-...`  |
@@ -261,7 +261,7 @@ Set `webhook.enabled: true` and provide a Slack incoming webhook URL to get noti
 GitHub Actions runs on every push to `main` or `development` and on pull requests targeting `main`.
 
 | Job       | What it does                                              |
-|-----------|-----------------------------------------------------------|
+|:----------|:----------------------------------------------------------|
 | Lint      | `flake8` — enforces style (max line length 110)           |
 | Test      | `pytest` on Python 3.11 and 3.12 with coverage reporting  |
 | Coverage  | Uploaded to Codecov (3.12 run only)                       |
