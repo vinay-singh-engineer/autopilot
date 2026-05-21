@@ -1,0 +1,44 @@
+{
+  "backup_simulation": {
+    "path": "jobs/backup_sim.py",
+    "enabled": true,
+    "cron": "0 2 * * *",
+    "info": "Simulates a nightly backup by writing a timestamped archive file. Demonstrates scheduled execution and file I/O."
+  },
+  "log_cleanup": {
+    "path": "jobs/log_cleanup.py",
+    "enabled": true,
+    "cron": "0 3 * * *",
+    "info": "Removes log files older than the configured retention period. Keeps the logs directory clean automatically."
+  },
+  "health_check": {
+    "path": "jobs/health_check.py",
+    "enabled": true,
+    "cron": "*/15 * * * *",
+    "info": "Performs an HTTP health check against the configured endpoint. Fails if the endpoint returns a non-2xx response or is unreachable."
+  },
+  "sync_check": {
+    "path": "jobs/sync_check.py",
+    "enabled": false,
+    "cron": "0 */4 * * *",
+    "info": "Simulates a data sync operation by generating a reconciliation report with record counts and discrepancy tracking."
+  },
+  "report_generator": {
+    "path": "jobs/report_generator.py",
+    "enabled": true,
+    "cron": "0 6 * * *",
+    "info": "Generates a daily summary report with job counts, failure rate, active users, and average execution duration."
+  },
+  "session_cleanup": {
+    "path": "jobs/session_cleanup.py",
+    "enabled": true,
+    "cron": "0 */2 * * *",
+    "info": "Purges expired and stale user sessions every 2 hours to keep session storage lean."
+  },
+  "cert_monitor": {
+    "path": "jobs/cert_monitor.py",
+    "enabled": true,
+    "cron": "0 8 * * 1",
+    "info": "Checks SSL certificate expiry for all internal endpoints. Raises an alert if any cert is within 30 days of expiry."
+  }
+}
