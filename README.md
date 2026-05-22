@@ -1,6 +1,6 @@
 # AutoPilot 🚀
 
-[![License: MIT](https://img.shields.io/github/license/vinay-singh-engineer/autopilot)](https://github.com/vinay-singh-engineer/autopilot/blob/main/LICENSE)
+[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](https://github.com/vinay-singh-engineer/autopilot/blob/main/LICENSE)
 [![CI](https://github.com/vinay-singh-engineer/autopilot/actions/workflows/ci.yml/badge.svg)](https://github.com/vinay-singh-engineer/autopilot/actions/workflows/ci.yml)
 
 A lightweight, self-hosted job scheduler with a real-time web dashboard. Schedule Python scripts, monitor execution status, enable/disable jobs on the fly, and get notified on failures — all through a clean browser UI.
