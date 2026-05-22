@@ -7,7 +7,7 @@ from functools import wraps
 from flask import Flask, request, jsonify, redirect, url_for, render_template, session
 
 LOG_DIR = "logs"
-VERSION_FILE = "./VERSION"
+VERSION_FILE = "../VERSION"
 JOB_CONFIG_FILE = "./config/jobs.json"
 JOB_STATUS_FILE = "./config/status.json"
 SETTINGS_FILE = "./config/settings.json"
