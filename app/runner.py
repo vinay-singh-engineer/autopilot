@@ -3,7 +3,9 @@ import os
 import threading
 import subprocess
 import platform
-from datetime import datetime
+from datetime import datetime, timedelta
+
+from constants import JobStatus
 
 LOG_DIR = "logs"
 JOB_STATUS_FILE = "./config/status.json"
@@ -13,8 +15,11 @@ status_lock = threading.Lock()
 
 
 def load_settings():
-    with open(SETTINGS_FILE, encoding="utf-8") as f:
-        return json.load(f)
+    try:
+        with open(SETTINGS_FILE, encoding="utf-8") as f:
+            return json.load(f)
+    except (json.JSONDecodeError, FileNotFoundError):
+        return {}
 
 
 def update_job_status(job_name, running=None, status=None, start_time=None, end_time=None):
@@ -22,7 +27,7 @@ def update_job_status(job_name, running=None, status=None, start_time=None, end_
         try:
             with open(JOB_STATUS_FILE, "r", encoding="utf-8") as f:
                 status_ = json.load(f)
-        except FileNotFoundError:
+        except (json.JSONDecodeError, FileNotFoundError):
             status_ = {}
 
         if job_name not in status_:
@@ -49,12 +54,24 @@ def log_job_execution(job=None, status=None, start=None, end=None, notification=
         f.write(f"{ts} | job={job} | status={status} | start={start} | end={end} | notification={notification}\n")  # noqa: E501
 
 
+def remove_older_logs():
+    settings = load_settings()
+    retention = settings.get("app", {}).get("logRetention", 7)
+    if os.path.exists(LOG_DIR):
+        for filename in os.listdir(LOG_DIR):
+            path = os.path.join(LOG_DIR, filename)
+            if os.path.isfile(path):
+                age = datetime.now() - datetime.fromtimestamp(os.path.getmtime(path))
+                if age > timedelta(days=retention):
+                    os.remove(path)
+
+
 def run_job(job_name, script_path):
     import notifier
-    status = "Success"
+    status = JobStatus.SUCCESS
     exception_ = None
     start_time = datetime.now().strftime("%m-%d-%Y %H:%M:%S")
-    update_job_status(job_name, running=True, status="Running", start_time=start_time)
+    update_job_status(job_name, running=True, status=JobStatus.RUNNING, start_time=start_time)
     timestamp = datetime.now().strftime("%m%d%Y_%H%M%S")
 
     try:
@@ -62,18 +79,18 @@ def run_job(job_name, script_path):
         print(f"{timestamp} [run_job] {job_name} exited with code {result.returncode}")
     except subprocess.CalledProcessError as e:
         print(f"{timestamp} [run_job] {job_name} failed: {e}")
-        status = "Failure"
+        status = JobStatus.FAILURE
         exception_ = e
     except Exception as e:
         print(f"{timestamp} [run_job] Unexpected error running {job_name}: {e}")
-        status = "Failure"
+        status = JobStatus.FAILURE
         exception_ = e
     finally:
         end_time = datetime.now().strftime("%m-%d-%Y %H:%M:%S")
         update_job_status(job_name, running=False, status=status, end_time=end_time)
 
         notification = "NA"
-        if status == "Failure":
+        if status == JobStatus.FAILURE:
             settings = load_settings()
             notification = notifier.notify(
                 job=job_name,
