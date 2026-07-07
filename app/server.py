@@ -2,7 +2,7 @@ import os
 import json
 import platform
 import threading
-from datetime import datetime, timedelta
+from datetime import datetime
 from functools import wraps
 from flask import Flask, request, jsonify, redirect, url_for, render_template, session
 
