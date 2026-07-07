@@ -1,10 +1,12 @@
+import os
 import time
 import json
 import atexit
 from apscheduler.schedulers.background import BackgroundScheduler
 from runner import run_job, remove_older_logs
 
-JOB_CONFIG_FILE = "./config/jobs.json"
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+JOB_CONFIG_FILE = os.path.join(BASE_DIR, "config", "jobs.json")
 scheduler = BackgroundScheduler()
 current_jobs = {}
 

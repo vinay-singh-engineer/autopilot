@@ -8,9 +8,10 @@ from flask import Flask, request, jsonify, redirect, url_for, render_template, s
 
 from constants import JobStatus
 
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 LOG_DIR = "logs"
-VERSION_FILE = "../VERSION"
-JOB_CONFIG_FILE = "./config/jobs.json"
+VERSION_FILE = os.path.join(BASE_DIR, "..", "VERSION")
+JOB_CONFIG_FILE = os.path.join(BASE_DIR, "config", "jobs.json")
 JOB_STATUS_FILE = "./config/status.json"
 SETTINGS_FILE = "./config/settings.json"
 
@@ -31,7 +32,6 @@ def get_version():
         return f.read().strip()
 
 
-SETTINGS = load_settings()
 APP_VERSION = get_version()
 
 status_lock = threading.Lock()
@@ -209,7 +209,6 @@ def toggle_job(job_name):
 @app.route("/autopilot/settings", methods=["GET", "POST"])
 @login_required
 def settings_page():
-    global SETTINGS
     user = session.get("user", "NA")
     update_logs(f"user={user} | endpoint='/autopilot/settings'")
     if request.method == "POST":
@@ -223,7 +222,6 @@ def settings_page():
         current["healthCheck"]["url"] = request.form.get("health_check_url", "").strip()
         with open(SETTINGS_FILE, "w", encoding="utf-8") as f:
             json.dump(current, f, indent=2)
-        SETTINGS = current
         return redirect(url_for("settings_page") + "?saved=1")
     settings = load_settings()
     saved = request.args.get("saved") == "1"
