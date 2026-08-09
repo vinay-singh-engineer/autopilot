@@ -1,17 +1,22 @@
+import os
 import time
 import json
 import atexit
 from apscheduler.schedulers.background import BackgroundScheduler
-from runner import run_job
+from runner import run_job, remove_older_logs
 
-JOB_CONFIG_FILE = "./config/jobs.json"
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+JOB_CONFIG_FILE = os.path.join(BASE_DIR, "config", "jobs.json")
 scheduler = BackgroundScheduler()
 current_jobs = {}
 
 
 def load_config():
-    with open(JOB_CONFIG_FILE, encoding="utf-8") as f:
-        return json.load(f)
+    try:
+        with open(JOB_CONFIG_FILE, encoding="utf-8") as f:
+            return json.load(f)
+    except (json.JSONDecodeError, FileNotFoundError):
+        return {}
 
 
 def parse_cron(cron_str):
@@ -79,6 +84,14 @@ def sync_jobs():
 
 def run_scheduler():
     print("Scheduler started.")
+    scheduler.add_job(
+        remove_older_logs,
+        "cron",
+        id="__log_cleanup__",
+        hour=0,
+        minute=0,
+        replace_existing=True,
+    )
     scheduler.start()
     atexit.register(lambda: scheduler.shutdown())
     try:

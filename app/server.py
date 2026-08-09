@@ -2,13 +2,16 @@ import os
 import json
 import platform
 import threading
-from datetime import datetime, timedelta
+from datetime import datetime
 from functools import wraps
 from flask import Flask, request, jsonify, redirect, url_for, render_template, session
 
+from constants import JobStatus
+
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 LOG_DIR = "logs"
-VERSION_FILE = "../VERSION"
-JOB_CONFIG_FILE = "./config/jobs.json"
+VERSION_FILE = os.path.join(BASE_DIR, "..", "VERSION")
+JOB_CONFIG_FILE = os.path.join(BASE_DIR, "config", "jobs.json")
 JOB_STATUS_FILE = "./config/status.json"
 SETTINGS_FILE = "./config/settings.json"
 
@@ -17,8 +20,11 @@ app.secret_key = os.getenv("AUTOPILOT_SECRET_KEY", "dev-secret-change-in-product
 
 
 def load_settings():
-    with open(SETTINGS_FILE, encoding="utf-8") as f:
-        return json.load(f)
+    try:
+        with open(SETTINGS_FILE, encoding="utf-8") as f:
+            return json.load(f)
+    except (json.JSONDecodeError, FileNotFoundError):
+        return {}
 
 
 def get_version():
@@ -26,7 +32,6 @@ def get_version():
         return f.read().strip()
 
 
-SETTINGS = load_settings()
 APP_VERSION = get_version()
 
 status_lock = threading.Lock()
@@ -45,7 +50,7 @@ def load_status():
     try:
         with open(JOB_STATUS_FILE, encoding="utf-8") as f:
             return json.load(f)
-    except FileNotFoundError:
+    except (json.JSONDecodeError, FileNotFoundError):
         return {}
 
 
@@ -55,24 +60,16 @@ def save_status(status):
 
 
 def load_config():
-    with open(JOB_CONFIG_FILE, encoding="utf-8") as f:
-        return json.load(f)
+    try:
+        with open(JOB_CONFIG_FILE, encoding="utf-8") as f:
+            return json.load(f)
+    except (json.JSONDecodeError, FileNotFoundError):
+        return {}
 
 
 def save_config(config):
     with open(JOB_CONFIG_FILE, "w", encoding="utf-8") as f:
         json.dump(config, f, indent=2)
-
-
-def remove_older_logs():
-    if os.path.exists(LOG_DIR):
-        retention = load_settings()["app"]["logRetention"]
-        for filename in os.listdir(LOG_DIR):
-            path = os.path.join(LOG_DIR, filename)
-            if os.path.isfile(path):
-                age = datetime.now() - datetime.fromtimestamp(os.path.getmtime(path))
-                if age > timedelta(days=retention):
-                    os.remove(path)
 
 
 def get_hostname():
@@ -125,14 +122,14 @@ def index():
         jobs_info.append({
             "name":       job_name,
             "enabled":    job["enabled"],
-            "status":     job_status.get("status", "Idle"),
+            "status":     job_status.get("status", JobStatus.IDLE),
             "start_time": job_status.get("start_time", "—"),
         })
     total = len(jobs_info)
     enabled = sum(1 for j in jobs_info if j["enabled"])
-    success = sum(1 for j in jobs_info if j["status"] == "Success")
-    running = sum(1 for j in jobs_info if j["status"] == "Running")
-    failed = sum(1 for j in jobs_info if j["status"] == "Failure")
+    success = sum(1 for j in jobs_info if j["status"] == JobStatus.SUCCESS)
+    running = sum(1 for j in jobs_info if j["status"] == JobStatus.RUNNING)
+    failed = sum(1 for j in jobs_info if j["status"] == JobStatus.FAILURE)
     ran = success + failed
     uptime_pct = round(success / ran * 100, 1) if ran > 0 else None
     return render_template(
@@ -154,7 +151,6 @@ def main():
     import scheduler as sched_module  # noqa: F401 — imported to ensure scheduler is running
     config = load_config()
     status = load_status()
-    remove_older_logs()
     hostname = get_hostname()
     timezone = get_timezone()
     user = session.get("user", "NA")
@@ -213,7 +209,6 @@ def toggle_job(job_name):
 @app.route("/autopilot/settings", methods=["GET", "POST"])
 @login_required
 def settings_page():
-    global SETTINGS
     user = session.get("user", "NA")
     update_logs(f"user={user} | endpoint='/autopilot/settings'")
     if request.method == "POST":
@@ -227,7 +222,6 @@ def settings_page():
         current["healthCheck"]["url"] = request.form.get("health_check_url", "").strip()
         with open(SETTINGS_FILE, "w", encoding="utf-8") as f:
             json.dump(current, f, indent=2)
-        SETTINGS = current
         return redirect(url_for("settings_page") + "?saved=1")
     settings = load_settings()
     saved = request.args.get("saved") == "1"
